@@ -2,7 +2,7 @@ import crypto_helpers as c
 import getpass
 import sys
 
-db = input('Enter the database pathname')
+db = input('Enter the database pathname: ')
 aes = c.AEScipher(db=db)
 uid = input('Enter a IdentityId:')
 uname, pwd = aes.read(uid)

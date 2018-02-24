@@ -1,12 +1,12 @@
+import logging
+import os
+import sqlite3
 from base64 import b64encode, b64decode
+
 from Crypto import Random
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.Hash import MD5
 from Crypto.PublicKey import RSA
-import sqlite3
-import logging
-import os
-
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 if os.name == 'nt':
@@ -71,8 +71,8 @@ class Identity:
     def update(self, uid, ID):
         try:
             cursor = self.connection.cursor()
-            sql = 'UPDATE `id_tbl` SET (`ID`) VALUES (?) WHERE `uid` = ?'
-            cursor.execute(sql, (uid, ID))
+            sql = 'UPDATE `id_tbl` SET `ID` = ? WHERE `uid` = ?'
+            cursor.execute(sql, (ID, uid))
             self.connection.commit()
             return True
         except sqlite3.Error as e:
@@ -95,10 +95,14 @@ class Identity:
             cursor = self.connection.cursor()
             sql = "SELECT `ID` FROM `id_tbl` WHERE `uid` = ?"
             cursor.execute(sql, (uid, ))
-            return cursor.fetchone()
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            else:
+                return result[0]
         except sqlite3.Error as e:
             logging.error('Error fetching record - %s' % e)
-            return False
+            return None
 
 
 class AEScipher:
@@ -122,9 +126,10 @@ class AEScipher:
         cipher = AES.new(self.key, AES.MODE_CFB, iv)
         ID = username + ':' + password
         ID_ = b64encode(iv + cipher.encrypt(ID))
-        try:
+ 
+        if self.identity.fetch(uid) is None:
             self.identity.add(uid, ID_)
-        except Exception:
+        else:
             self.identity.update(uid, ID_)
 
     def read(self, uid):
@@ -132,7 +137,7 @@ class AEScipher:
         if ID_ is None:
             return '', ''
         else:
-            ID_ = b64decode(ID_[0])
+            ID_ = b64decode(ID_)
             iv = ID_[:AES.block_size]
             cipher = AES.new(self.key, AES.MODE_CFB, iv)
             ID = cipher.decrypt(ID_[AES.block_size:]).decode()
@@ -169,6 +174,18 @@ class RSAcipher:
 
 
 def main():
+    
+    id=Identity()
+    id.add('abc', 'ID')
+    uid=id.fetch('abc')
+    print('uid')
+    id.add('abc', 'ID1')
+    id.update('abc', 'ID1')
+    id.remove('abc')
+    id.update('abc1', 'id')
+    id.close()
+    
+    
     text = 'Hello Lobo'
     aes = AEScipher()
     msg = aes.encrypt(text)
@@ -210,7 +227,10 @@ def main():
         log.removeHandler(i)
         i.flush()
         i.close()
-    os.remove('crypto_h.log')
+    try:
+        os.remove('crypto_h.log')
+    except:
+        pass
     
 
 if __name__ == "__main__":
