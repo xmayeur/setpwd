@@ -137,9 +137,13 @@ class AEScipher:
             user = ID.split(':')[0]
             pwd = ID.split(':')[1]
             return user, pwd
-
+        
+    def close(self):
+        self.identity.close()
+        
 
 class RSAcipher:
+
     def __init__(self, certfile):
         self.key = RSA.importKey(open(certfile).read())
         self.rsa = PKCS1_OAEP.new(self.key)
@@ -183,6 +187,21 @@ def main():
     
     print('All test passed')
     
+    # perform some cleaning here - remove test files
+    aes.close()
+    os.remove('id.db')
+
+    os.remove('priv_test.pem')
+    os.remove('pub_test.pem')
+
+    log = logging.getLogger()
+    x = list(log.handlers)
+    for i in x:
+        log.removeHandler(i)
+        i.flush()
+        i.close()
+    os.remove('crypto_h.log')
     
+
 if __name__ == "__main__":
     main()
