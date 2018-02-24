@@ -7,12 +7,14 @@ import sqlite3
 import logging
 import os
 
+
+logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 if os.name == 'nt':
     logging.basicConfig(filename='crypto_h.log', level=logging.INFO)
 else:
     logging.basicConfig(filename='/var/log/crypto_h.log', level=logging.INFO)
     
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+
 
 
 def create_keyset(name='key'):
@@ -126,18 +128,26 @@ class AEScipher:
             self.identity.update(uid, ID_)
 
     def read(self, uid):
-        ID_ = self.identity.fetch(uid)[0]
+        ID_ = self.identity.fetch(uid)
         if ID_ is None:
             return '', ''
         else:
-            ID_ = b64decode(ID_)
+            ID_ = b64decode(ID_[0])
             iv = ID_[:AES.block_size]
             cipher = AES.new(self.key, AES.MODE_CFB, iv)
             ID = cipher.decrypt(ID_[AES.block_size:]).decode()
             user = ID.split(':')[0]
             pwd = ID.split(':')[1]
             return user, pwd
-        
+    
+    def remove(self, uid, pwd):
+        _, pwd1 = self.read(uid)
+        if pwd == pwd1:
+            self.identity.remove(uid)
+            return True
+        else:
+            return False
+      
     def close(self):
         self.identity.close()
         
