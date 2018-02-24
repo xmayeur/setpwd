@@ -11,16 +11,17 @@ if os.name == 'nt':
     logging.basicConfig(filename='crypto_h.log', level=logging.INFO)
 else:
     logging.basicConfig(filename='/var/log/crypto_h.log', level=logging.INFO)
+    
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
 def create_keyset(name='key'):
     key = RSA.generate(2048)
-    with open('priv_' + name + '.pem', 'w') as f:
+    with open('priv_' + name + '.pem', 'wb') as f:
         f.write(key.exportKey('PEM'))
     pubkey = key.publickey()
-    with open('pub_' + name + '.pem', 'w') as f:
-        f.write(pubkey.exportKey('OpenSSH'))
+    with open('pub_' + name + '.pem', 'wb') as f:
+        f.write(pubkey.exportKey())
 
 
 class Identity:
@@ -61,7 +62,7 @@ class Identity:
             cursor.execute(sql, (uid, ID))
             self.connection.commit()
             return True
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error('Error adding record - %s' % e)
             return False
         
@@ -72,7 +73,7 @@ class Identity:
             cursor.execute(sql, (uid, ID))
             self.connection.commit()
             return True
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error('Error adding record - %s' % e)
             return False
 
@@ -83,7 +84,7 @@ class Identity:
             cursor.execute(sql, (uid, ))
             self.connection.commit()
             return True
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error('Error deleting record - %s' % e)
             return False
         
@@ -93,7 +94,7 @@ class Identity:
             sql = "SELECT `ID` FROM `id_tbl` WHERE `uid` = ?"
             cursor.execute(sql, (uid, ))
             return cursor.fetchone()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error('Error fetching record - %s' % e)
             return False
 
@@ -101,7 +102,7 @@ class Identity:
 class AEScipher:
     def __init__(self, db='id.db'):
         self.identity = Identity(db)
-        self.key = MD5.new(os.path.join(os.getcwd(), db)).digest()
+        self.key = MD5.new(db.encode('utf-8')).digest()
  
     def encrypt(self, text):
         iv = Random.new().read(AES.block_size)
@@ -112,7 +113,7 @@ class AEScipher:
         msg = b64decode(msg)
         iv = msg[:AES.block_size]
         cipher = AES.new(self.key, AES.MODE_CFB, iv)
-        return cipher.decrypt(msg[AES.block_size:])
+        return cipher.decrypt(msg[AES.block_size:]).decode()
 
     def save(self, uid, username, password):
         iv = Random.new().read(AES.block_size)
@@ -132,7 +133,7 @@ class AEScipher:
             ID_ = b64decode(ID_)
             iv = ID_[:AES.block_size]
             cipher = AES.new(self.key, AES.MODE_CFB, iv)
-            ID = cipher.decrypt(ID_[AES.block_size:])
+            ID = cipher.decrypt(ID_[AES.block_size:]).decode()
             user = ID.split(':')[0]
             pwd = ID.split(':')[1]
             return user, pwd
@@ -144,28 +145,30 @@ class RSAcipher:
         self.rsa = PKCS1_OAEP.new(self.key)
 
     def encrypt(self, text):
-        return b64encode(self.rsa.encrypt(text))
+        return b64encode(self.rsa.encrypt(text.encode()))
 
     def decrypt(self, msg):
         try:
-            return self.rsa.decrypt(b64decode(msg))
-        except Exception, e:
+            return self.rsa.decrypt(b64decode(msg)).decode()
+        except Exception as e:
             return None
 
 
 def main():
-    # text = 'Hello Lobo'
+    text = 'Hello Lobo'
     aes = AEScipher()
-    # msg = aes.encrypt(text)
-    # if aes.decrypt(msg) == text:
-    #     print 'Successful AES encrypt-decrypt'
-    #
-    # create_keyset('test')
-    # rsa = RSAcipher('pub_test.pem')
-    # msg = rsa.encrypt(text)
-    # rsa = RSAcipher('priv_test.pem')
-    # if rsa.decrypt(msg) == text:
-    #     print 'Successful RSA encrypt-decrypt'
+    msg = aes.encrypt(text)
+    if aes.decrypt(msg) != text:
+        print('Failed AES encrypt-decrypt')
+        return
+        
+    create_keyset('test')
+    rsa = RSAcipher('pub_test.pem')
+    msg = rsa.encrypt(text)
+    rsa = RSAcipher('priv_test.pem')
+    if rsa.decrypt(msg) != text:
+        print('Failed RSA encrypt-decrypt')
+        return
 
     user = 'KeyUser'
     pwd = 'KeyPwd123'
@@ -174,9 +177,12 @@ def main():
     aes.save(uid, user, pwd)
     user1, pwd1 = aes.read(uid)
 
-    if user == user1 and pwd == pwd1:
-        print 'Successful user/pwd store & decode'
-
-
+    if user != user1 or pwd != pwd1:
+        print('Failed user/pwd store & decode')
+        return
+    
+    print('All test passed')
+    
+    
 if __name__ == "__main__":
     main()
