@@ -13,9 +13,7 @@ if os.name == 'nt':
     logging.basicConfig(filename='crypto_h.log', level=logging.INFO)
 else:
     logging.basicConfig(filename='/var/log/crypto_h.log', level=logging.INFO)
-    
-
-
+ 
 
 def create_keyset(name='key'):
     key = RSA.generate(2048)
@@ -28,7 +26,7 @@ def create_keyset(name='key'):
 
 class Identity:
     
-    def __init__(self, db='id.db'):
+    def __init__(self, db='/conf/.id.db'):
         self.db = db
 
         try:
