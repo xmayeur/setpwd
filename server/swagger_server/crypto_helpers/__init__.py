@@ -185,7 +185,6 @@ def main():
     id.update('abc1', 'id')
     id.close()
     
-    
     text = 'Hello Lobo'
     aes = AEScipher()
     msg = aes.encrypt(text)
