@@ -1,18 +1,11 @@
-FROM arm32v7/python:3.6-slim
+FROM  microservice3
 
-RUN mkdir -p /usr/src/app
-RUN mkdir /conf
+COPY requirements.txt /app/requirements.txt
+COPY swagger_server /app
+WORKDIR /app
+RUN pip3 install -r requirements.txt
 
-WORKDIR /usr/src/app
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-COPY requirements.txt /usr/src/app/
+CMD ["/usr/bin/supervisord"]
 
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-COPY . /usr/src/app
-
-EXPOSE 8080
-
-ENTRYPOINT ["python3"]
-
-CMD ["-m", "swagger_server"]

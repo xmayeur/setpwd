@@ -104,7 +104,7 @@ class Identity:
 
 
 class AEScipher:
-    def __init__(self, db='id.db'):
+    def __init__(self, db='/conf/.id.db'):
         self.identity = Identity(db)
         self.key = MD5.new(db.encode('utf-8')).digest()
  
