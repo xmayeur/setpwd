@@ -1,7 +1,7 @@
-FROM  microservice3
+FROM  microservice
 
 COPY requirements.txt /app/requirements.txt
-COPY swagger_server /app
+COPY . /app
 WORKDIR /app
 RUN pip3 install -r requirements.txt
 
