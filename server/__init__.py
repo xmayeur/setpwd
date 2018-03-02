@@ -3,7 +3,6 @@
 import connexion
 from swagger_server import encoder
 
-application = None
 
 def main():
     global application
