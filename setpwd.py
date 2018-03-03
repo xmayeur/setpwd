@@ -14,7 +14,7 @@ r = requests.get(url=url + '?uid=%s' % uid)
 id = r.json()
 if id['status'] == 200:
     uname = id['username']
-    pwd = id['pwd']
+    pwd = id['password']
 else:
     uname = ''
     pwd = ''
