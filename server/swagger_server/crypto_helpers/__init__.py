@@ -106,7 +106,7 @@ class Identity:
             return None
 
 
-class AEScipher:
+class AEScipher():
     def __init__(self, db='/conf/.id.db'):
         self.identity = Identity(db)
         self.key = MD5.new(db.encode('utf-8')).digest()
@@ -126,7 +126,7 @@ class AEScipher:
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(self.key, AES.MODE_CFB, iv)
         ID = username + ':' + password
-        ID_ = b64encode(iv + cipher.encrypt(ID))
+        ID_ = b64encode(iv + cipher.encrypt(ID.encode()))
  
         if self.identity.fetch(uid) is None:
             self.identity.add(uid, ID_)
@@ -176,10 +176,10 @@ class RSAcipher:
 
 def main():
     
-    id=Identity()
+    id=Identity(db='id.db')
     id.add('abc', 'ID')
     uid=id.fetch('abc')
-    print('uid')
+    print(uid)
     id.add('abc', 'ID1')
     id.update('abc', 'ID1')
     id.remove('abc')
@@ -187,8 +187,8 @@ def main():
     id.close()
     
     text = 'Hello Lobo'
-    aes = AEScipher()
-    msg = aes.encrypt(text)
+    aes = AEScipher(db='id.db')
+    msg = aes.encrypt(text.encode())
     if aes.decrypt(msg) != text:
         print('Failed AES encrypt-decrypt')
         return
@@ -210,6 +210,10 @@ def main():
 
     if user != user1 or pwd != pwd1:
         print('Failed user/pwd store & decode')
+        return
+    
+    if not aes.remove(uid, pwd):
+        print('Failed to remove uid')
         return
     
     print('All test passed')
