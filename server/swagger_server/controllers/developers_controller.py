@@ -21,7 +21,7 @@ def get_identity(uid):  # noqa: E501
     user, pwd = aes.read(uid=uid)
     aes.close()
     if user != '':
-        return {'status': 200, 'username': user, 'pwd': pwd}
+        return {'status': 200, 'username': user, 'password': pwd}
     else:
         return {'status': 400, 'error': 'uid not found %s' % uid}
 

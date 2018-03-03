@@ -33,7 +33,8 @@ class Identity:
             self.connection = sqlite3.connect(db)
         except sqlite3.Error:
             logging.error('Cannot connect to the database: %s' % self.db)
-            
+            return
+        
         try:
             cursor = self.connection.cursor()
             sql = '''CREATE TABLE IF NOT EXISTS `id_tbl` (
@@ -43,6 +44,8 @@ class Identity:
                     )
             '''
             cursor.execute(sql)
+            self.connection.commit()
+            
         except sqlite3.Error:
             logging.error('Cannot create table `id_tbl`')
   

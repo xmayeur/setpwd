@@ -17,7 +17,7 @@ tags:
 - name: "developers"
   description: "Operations available to regular developers"
 schemes:
-- "https"
+- "http"
 paths:
   /ID:
     get:
