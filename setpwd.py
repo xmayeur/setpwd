@@ -6,7 +6,7 @@ import json
 
 # db = input('Enter the database pathname: ')
 # aes = c.AEScipher(db=db)
-uid = input('Enter a IdentityId:')
+uid = input('Enter a IdentityId: ')
 
 url = 'http://lobo.local:5000/api/ID'
 headers = {'Content-type': 'application/json'}
