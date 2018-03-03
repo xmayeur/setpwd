@@ -56,7 +56,7 @@ else:
             new_id = dict()
             new_id['id'] = uid
             new_id['username'] = uname
-            new_id['password'] = pwd1
+            new_id['password'] = pwd
             r = requests.delete(url=url, data=json.dumps(new_id), headers=headers)
             if r.json()['status'] == 200:
                 print('Identity removed!')

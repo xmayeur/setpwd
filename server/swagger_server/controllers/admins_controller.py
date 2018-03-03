@@ -19,8 +19,6 @@ def delete_identity(IdentityItem=None):  # noqa: E501
     if connexion.request.is_json:
         IdentityItem = Id.from_dict(connexion.request.get_json())  # noqa: E501
         aes = c.AEScipher()
-        u, p = aes.read(IdentityItem.id)
-        print('%s - %s' % (p, IdentityItem.password))
         
         if aes.remove(IdentityItem.id, IdentityItem.password):
             msg = {'status': 201, 'message': 'Identity %s removed' % IdentityItem.id}
