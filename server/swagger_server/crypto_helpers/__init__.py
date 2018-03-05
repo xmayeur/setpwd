@@ -165,7 +165,7 @@ class RSAcipher:
         self.rsa = PKCS1_OAEP.new(self.key)
 
     def encrypt(self, text):
-        return b64encode(self.rsa.encrypt(text.encode()))
+        return b64encode(self.rsa.encrypt(text.encode())).decode()
 
     def decrypt(self, msg):
         try:
