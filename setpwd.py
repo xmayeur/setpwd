@@ -8,7 +8,7 @@ import json
 # aes = c.AEScipher(db=db)
 uid = input('Enter a IdentityId: ')
 
-url = 'http://lobo.local:5000/api/ID'
+url = 'http://192.168.0.4:5000/api/ID'
 headers = {'Content-type': 'application/json'}
 r = requests.get(url=url + '?uid=%s' % uid)
 id = r.json()

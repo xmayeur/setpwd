@@ -1,12 +1,18 @@
 import logging
 import os
-import sqlite3
+
 from base64 import b64encode, b64decode
 
 from Crypto import Random
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.Hash import MD5
 from Crypto.PublicKey import RSA
+from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import json
+
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 if os.name == 'nt':
@@ -24,91 +30,29 @@ def create_keyset(name='key'):
         f.write(pubkey.exportKey())
 
 
-class Identity:
-    
+Base = declarative_base()
+
+
+class Identity(Base):
+    __tablename__ = 'id_tbl'
+    uid = Column(String, primary_key=True)
+    id = Column(String)
+
+
+def create_table_id_tbl(db):
+    engine = create_engine('sqlite:///'+db)
+    Base.metadata.create_all(engine)
+
+
+class AEScipher:
     def __init__(self, db='/conf/.id.db'):
-        self.db = db
-
-        try:
-            self.connection = sqlite3.connect(db)
-        except sqlite3.Error:
-            logging.error('Cannot connect to the database: %s' % self.db)
-            return
+        engine = create_engine('sqlite:///'+db)
+        Base.metadata.bind = engine
+        DBsession = sessionmaker()
+        DBsession.bind = engine
+        self.sql = DBsession()
         
-        try:
-            cursor = self.connection.cursor()
-            sql = '''CREATE TABLE IF NOT EXISTS `id_tbl` (
-                    `uid` text NOT NULL,
-                    `ID` text NOT NULL,
-                    PRIMARY KEY  (`uid`)
-                    )
-            '''
-            cursor.execute(sql)
-            self.connection.commit()
-            
-        except sqlite3.Error:
-            logging.error('Cannot create table `id_tbl`')
-  
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.connection.close()
-
-    def __enter__(self):
-        return self
-    
-    def close(self):
-        self.connection.close()
-       
-    def add(self, uid, ID):
-        try:
-            cursor = self.connection.cursor()
-            sql = 'INSERT INTO `id_tbl` (`uid`, `ID`) VALUES (?, ?)'
-            cursor.execute(sql, (uid, ID))
-            self.connection.commit()
-            return True
-        except sqlite3.Error as e:
-            logging.error('Error adding record - %s' % e)
-            return False
-        
-    def update(self, uid, ID):
-        try:
-            cursor = self.connection.cursor()
-            sql = 'UPDATE `id_tbl` SET `ID` = ? WHERE `uid` = ?'
-            cursor.execute(sql, (ID, uid))
-            self.connection.commit()
-            return True
-        except sqlite3.Error as e:
-            logging.error('Error adding record - %s' % e)
-            return False
-
-    def remove(self, uid):
-        try:
-            cursor = self.connection.cursor()
-            sql = "DELETE FROM `id_tbl` WHERE `uid` = ?"
-            cursor.execute(sql, (uid, ))
-            self.connection.commit()
-            return True
-        except sqlite3.Error as e:
-            logging.error('Error deleting record - %s' % e)
-            return False
-        
-    def fetch(self, uid):
-        try:
-            cursor = self.connection.cursor()
-            sql = "SELECT `ID` FROM `id_tbl` WHERE `uid` = ?"
-            cursor.execute(sql, (uid, ))
-            result = cursor.fetchone()
-            if result is None:
-                return None
-            else:
-                return result[0]
-        except sqlite3.Error as e:
-            logging.error('Error fetching record - %s' % e)
-            return None
-
-
-class AEScipher():
-    def __init__(self, db='/conf/.id.db'):
-        self.identity = Identity(db)
+        # self.identity = Identity(db)
         self.key = MD5.new(db.encode('utf-8')).digest()
  
     def encrypt(self, text):
@@ -128,16 +72,26 @@ class AEScipher():
         ID = username + ':' + password
         ID_ = b64encode(iv + cipher.encrypt(ID.encode()))
  
-        if self.identity.fetch(uid) is None:
-            self.identity.add(uid, ID_)
+        # if self.identity.fetch(uid) is None:
+        #     self.identity.add(uid, ID_)
+        # else:
+        #     self.identity.update(uid, ID_)
+        
+        row = self.sql.query(Identity).filter(Identity.uid == uid).first()
+        if row is None:
+            self.sql.add(Identity(uid=uid, id=ID_))
         else:
-            self.identity.update(uid, ID_)
-
+            row.ID = ID_
+        self.sql.commit()
+        
     def read(self, uid):
-        ID_ = self.identity.fetch(uid)
-        if ID_ is None:
+        # ID_ = self.identity.fetch(uid)
+        row = self.sql.query(Identity).filter(Identity.uid == uid).first()
+        
+        if row is None:
             return '', ''
         else:
+            ID_ = row.id
             ID_ = b64decode(ID_)
             iv = ID_[:AES.block_size]
             cipher = AES.new(self.key, AES.MODE_CFB, iv)
@@ -149,13 +103,49 @@ class AEScipher():
     def remove(self, uid, pwd):
         _, pwd1 = self.read(uid)
         if pwd == pwd1:
-            self.identity.remove(uid)
-            return True
+            row = self.sql.query(Identity).filter(Identity.uid == uid).first()
+            if row is not None:
+                self.sql.delete(row)
+                self.sql.commit()
+                return True
+            else:
+                return False
+            # self.identity.remove(uid)
+            # return True
         else:
             return False
+
+    def dump(self):
+        rows = self.sql.query(Identity)
+        dd = dict()
+        for row in rows:
+            d = dict()
+            uid_ = row.uid
+            ID_ = row.id
+            ID_ = b64decode(ID_)
+            iv = ID_[:AES.block_size]
+            cipher = AES.new(self.key, AES.MODE_CFB, iv)
+            ID = cipher.decrypt(ID_[AES.block_size:]).decode()
+            user = ID.split(':')[0]
+            pwd = ID.split(':')[1]
+            d['uid'] = uid_
+            d['user'] = user
+            d['pwd'] = pwd
+            dd[uid_] = d
+            del d
+        return json.dumps(dd)
       
+    def load(self, data):
+        dd = json.loads(data)
+        for d in dd:
+            uid_ = dd[d]['uid']
+            user = dd[d]['user']
+            pwd = dd[d]['pwd']
+            self.save(uid_, user, pwd)
+    
     def close(self):
-        self.identity.close()
+        # self.identity.close()
+        self.sql.close()
         
 
 class RSAcipher:
@@ -176,16 +166,7 @@ class RSAcipher:
 
 def main():
     
-    id=Identity(db='id.db')
-    id.add('abc', 'ID')
-    uid=id.fetch('abc')
-    print(uid)
-    id.add('abc', 'ID1')
-    id.update('abc', 'ID1')
-    id.remove('abc')
-    id.update('abc1', 'id')
-    id.close()
-    
+    create_table_id_tbl(db='id.db')
     text = 'Hello Lobo'
     aes = AEScipher(db='id.db')
     msg = aes.encrypt(text.encode())
@@ -203,7 +184,7 @@ def main():
 
     user = 'KeyUser'
     pwd = 'KeyPwd123'
-    uid ='2'
+    uid = '20'
     
     aes.save(uid, user, pwd)
     user1, pwd1 = aes.read(uid)
@@ -216,7 +197,23 @@ def main():
         print('Failed to remove uid')
         return
     
-    print('All test passed')
+    for i in range(1, 10):
+        user = 'user' + str(i)
+        pwd = 'pwd' + str(i)
+        uid = i
+        aes.save(uid, user, pwd)
+    
+    dd = aes.dump()
+    
+    for i in range(1, 10):
+        aes.remove(i, 'pwd'+str(i))
+        
+    aes.load(dd)
+    dd1 = aes.dump()
+    if dd == dd1:
+        print(aes.dump())
+    
+    print('All tests passed')
     
     # perform some cleaning here - remove test files
     aes.close()

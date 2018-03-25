@@ -46,7 +46,7 @@ paths:
     post:
       tags:
       - "developers"
-      summary: "Add a new identiy"
+      summary: "Add a new identity"
       description: "Adds an new ID tag & identity"
       operationId: "post_identity"
       consumes:
@@ -57,7 +57,7 @@ paths:
       - in: "body"
         name: "IdentityItem"
         description: "Identity item to add"
-        required: false
+        required: true
         schema:
           $ref: "#/definitions/id"
       responses:
@@ -81,8 +81,8 @@ paths:
       parameters:
       - in: "body"
         name: "IdentityItem"
-        description: "Identity item to add"
-        required: false
+        description: "Identity item to modify"
+        required: true
         schema:
           $ref: "#/definitions/id"
       responses:
@@ -91,7 +91,7 @@ paths:
         400:
           description: "invalid input, object invalid"
         409:
-          description: "an existing item already exists"
+          description: "item does not exist"
       x-swagger-router-controller: "swagger_server.controllers.developers_controller"
     delete:
       tags:
@@ -112,7 +112,7 @@ paths:
           $ref: "#/definitions/id"
       responses:
         201:
-          description: "Identity succesfully deleted"
+          description: "Identity successfully deleted"
         400:
           description: "invalid input, object invalid"
       x-swagger-router-controller: "swagger_server.controllers.admins_controller"
