@@ -133,7 +133,7 @@ class AEScipher:
             d['pwd'] = pwd
             dd[uid_] = d
             del d
-        return json.dumps(dd)
+        return json.dumps(dd, indent=4)
       
     def load(self, data):
         dd = json.loads(data)
