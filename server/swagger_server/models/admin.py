@@ -37,7 +37,7 @@ class Admin(Model):
 
         :param dikt: A dict.
         :type: dict
-        :return: The admin of this Admin.  # noqa: E501
+        :return: The admins of this Admin.  # noqa: E501
         :rtype: Admin
         """
         return util.deserialize_model(dikt, cls)

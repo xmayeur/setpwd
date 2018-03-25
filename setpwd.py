@@ -8,7 +8,32 @@ import json
 # aes = c.AEScipher(db=db)
 uid = input('Enter a IdentityId: ')
 
-if uid != 'dump' and uid != 'load':
+if uid == 'dump':
+
+    # url = 'http://192.168.0.4:5000/api/admin'
+    url = 'http://localhost:8080/api/admin'
+    headers = {'Content-type': 'application/json'}
+    r = requests.get(url=url)
+    print(r.json()['status'])
+    data = r.json()['data']
+    with open('id.json', 'w') as f:
+        json.dump(json.loads(data), f)
+    sys.exit(0)
+
+elif uid == 'load':
+    # url = 'http://192.168.0.4:5000/api/admin'
+    url = 'http://localhost:8080/api/admin'
+    with open('id.json', 'r') as f:
+        data = json.load(f)
+    headers = {'Content-type': 'application/json'}
+    r = requests.post(url=url, data=json.dumps(data), headers=headers)
+    if r.json()['status'] == 200:
+        print('DB saved!')
+    else:
+        print(r.json())
+    sys.exit(0)
+    
+else:
     url = 'http://192.168.0.4:5000/api/ID'
     headers = {'Content-type': 'application/json'}
     r = requests.get(url=url + '?uid=%s' % uid)
@@ -78,9 +103,4 @@ if uid != 'dump' and uid != 'load':
                     print(r.json())
                 sys.exit(0)
                 
-elif uid == 'dump':
-    
-    url = 'http://192.168.0.4:5000/api/admin'
-    headers = {'Content-type': 'application/json'}
-    r = requests.get(url=url + '?uid=%s' % uid)
-    print(r.json())
+

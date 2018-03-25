@@ -2,13 +2,13 @@
 
 from flask import Blueprint, render_template, redirect, url_for
 
-adm = Blueprint('admin', __name__)
+adm = Blueprint('admins', __name__)
 
 
 @adm.route('/')
 def admin_root():
     # do something
-    return render_template('admin.html')
+    return render_template('admins.html')
     
 
 def index():

@@ -46,6 +46,8 @@ def create_table_id_tbl(db):
 
 class AEScipher:
     def __init__(self, db='/conf/.id.db'):
+        if os.name == 'nt':
+            db = 'id.db'
         engine = create_engine('sqlite:///'+db)
         Base.metadata.bind = engine
         DBsession = sessionmaker()
@@ -117,7 +119,7 @@ class AEScipher:
 
     def dump(self):
         rows = self.sql.query(Identity)
-        dd = dict()
+        dd = []
         for row in rows:
             d = dict()
             uid_ = row.uid
@@ -128,19 +130,19 @@ class AEScipher:
             ID = cipher.decrypt(ID_[AES.block_size:]).decode()
             user = ID.split(':')[0]
             pwd = ID.split(':')[1]
-            d['uid'] = uid_
-            d['user'] = user
-            d['pwd'] = pwd
-            dd[uid_] = d
+            d['id'] = uid_
+            d['username'] = user
+            d['password'] = pwd
+            dd.append(d)
             del d
         return json.dumps(dd, indent=4)
       
     def load(self, data):
-        dd = json.loads(data)
-        for d in dd:
-            uid_ = dd[d]['uid']
-            user = dd[d]['user']
-            pwd = dd[d]['pwd']
+        # dd = json.loads(data)
+        for d in data:
+            uid_ = d['id']
+            user = d['username']
+            pwd = d['password']
             self.save(uid_, user, pwd)
     
     def close(self):
