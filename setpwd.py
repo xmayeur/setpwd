@@ -10,14 +10,14 @@ uid = input('Enter a IdentityId: ')
 
 if uid == 'dump':
 
-    # url = 'http://192.168.0.4:5000/api/admin'
-    url = 'http://localhost:8080/api/admin'
+    url = 'http://192.168.0.4:5000/api/admin'
+    # url = 'http://localhost:8080/api/admin'
     headers = {'Content-type': 'application/json'}
     r = requests.get(url=url)
     print(r.json()['status'])
     data = r.json()['data']
     with open('id.json', 'w') as f:
-        json.dump(json.loads(data), f)
+        json.dump(json.loads(data), f, indent=4)
     sys.exit(0)
 
 elif uid == 'load':
