@@ -10,8 +10,8 @@ uid = input('Enter a IdentityId: ')
 
 if uid == 'dump':
 
-    url = 'http://192.168.0.4:5000/api/admin'
-    # url = 'http://localhost:8080/api/admin'
+    # url = 'http://lobo.local:5000/api/admin'
+    url = 'http://localhost:8080/api/admin'
     headers = {'Content-type': 'application/json'}
     r = requests.get(url=url)
     print(r.json()['status'])
@@ -21,8 +21,8 @@ if uid == 'dump':
     sys.exit(0)
 
 elif uid == 'load':
-    # url = 'http://192.168.0.4:5000/api/admin'
-    url = 'http://localhost:8080/api/admin'
+    url = 'http://lobo.local:5000/api/admin'
+    # url = 'http://localhost:8080/api/admin'
     with open('id.json', 'r') as f:
         data = json.load(f)
     headers = {'Content-type': 'application/json'}
@@ -34,7 +34,7 @@ elif uid == 'load':
     sys.exit(0)
     
 else:
-    url = 'http://192.168.0.4:5000/api/ID'
+    url = 'http://lobo.local:5000/api/ID'
     headers = {'Content-type': 'application/json'}
     r = requests.get(url=url + '?uid=%s' % uid)
     id = r.json()
