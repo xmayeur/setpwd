@@ -1,4 +1,4 @@
-host = "nas.local"
+host = "192.168.0.16"
 uid = "spam"
 db = "mayeur_be"
 

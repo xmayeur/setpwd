@@ -9,8 +9,22 @@ from swagger_server.models.id import Id  # noqa: E501
 from swagger_server.test import BaseTestCase
 
 
-class TestDevelopersController(BaseTestCase):
-    """DevelopersController integration test stubs"""
+class TestUsersController(BaseTestCase):
+    """UsersController integration test stubs"""
+
+    def test_delete_identity(self):
+        """Test case for delete_identity
+
+        Delete an existing identiy
+        """
+        IdentityItem = Id()
+        response = self.client.open(
+            '/api/ID',
+            method='DELETE',
+            data=json.dumps(IdentityItem),
+            content_type='application/json')
+        self.assert200(response,
+                       'Response body is : ' + response.data.decode('utf-8'))
 
     def test_get_identity(self):
         """Test case for get_identity
