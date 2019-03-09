@@ -6,14 +6,21 @@ import json
 
 # db = input('Enter the database pathname: ')
 # aes = c.AEScipher(db=db)
+
 uid = input('Enter a IdentityId: ')
+url = 'http://192.168.0.4:5000/api/ID'
+url2 = 'http://192.168.0.4:5000/api/admin'
+
+if len(sys.argv) >1:
+    if sys.argv[1] == 'local':
+        url = 'http://localhost:8080/api/ID'
+        url2 = 'http://localhost:8080/api/admin'
+       
 
 if uid == 'dump':
 
-    # url = 'http://lobo.local:5000/api/admin'
-    url = 'http://localhost:8080/api/admin'
     headers = {'Content-type': 'application/json'}
-    r = requests.get(url=url)
+    r = requests.get(url=url2)
     print(r.json()['status'])
     data = r.json()['data']
     with open('id.json', 'w') as f:
@@ -21,12 +28,11 @@ if uid == 'dump':
     sys.exit(0)
 
 elif uid == 'load':
-    url = 'http://lobo.local:5000/api/admin'
-    # url = 'http://localhost:8080/api/admin'
+
     with open('id.json', 'r') as f:
         data = json.load(f)
     headers = {'Content-type': 'application/json'}
-    r = requests.post(url=url, data=json.dumps(data), headers=headers)
+    r = requests.post(url=url2, data=json.dumps(data), headers=headers)
     if r.json()['status'] == 200:
         print('DB saved!')
     else:
@@ -34,7 +40,7 @@ elif uid == 'load':
     sys.exit(0)
     
 else:
-    url = 'http://lobo.local:5000/api/ID'
+
     headers = {'Content-type': 'application/json'}
     r = requests.get(url=url + '?uid=%s' % uid)
     id = r.json()

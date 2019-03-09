@@ -9,5 +9,5 @@ setup(
     author='X. Mayeur',
     author_email='xavier@mayeur.be',
     description='Some helper for simple encryption/decryption of messages using either AES 256 or RSA PKCS#1 OAEP',
-    requires=['pycrypto', 'sqlite3']
+    requires=['requests', 'getpass']
 )
