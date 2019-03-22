@@ -1,3 +1,4 @@
+
 import requests
 import getpass
 import sys
@@ -32,10 +33,10 @@ class RSAcipher:
     
     def create_keyset(self, name='key'):
         self.key = RSA.generate(2048)
-        with open('priv_' + name + '.pem', 'wb') as f:
+        with open(name + '.key', 'wb') as f:
             f.write(self.key.exportKey('PEM'))
         self.pubkey = self.key.publickey()
-        with open('pub_' + name + '.pem', 'wb') as f:
+        with open(name + '.pub', 'wb') as f:
             f.write(self.pubkey.exportKey())
         return self.key
     
@@ -156,7 +157,7 @@ def main():
     
             # decrypt if needed
             if args.key:
-                rsa = RSAcipher(certfile='priv_' + args.key + '.pem')
+                rsa = RSAcipher(certfile=args.key + '.key')
                 curr_name = rsa.decrypt(curr_name)
                 curr_pwd = rsa.decrypt(curr_pwd)
     
@@ -199,7 +200,7 @@ def main():
                 
             # encrypt if required
             if args.key:
-                rsa = RSAcipher(certfile='pub_' + args.key + '.pem')
+                rsa = RSAcipher(certfile= args.key + '.pub')
                 uname = rsa.encrypt(uname)
                 pwd = rsa.encrypt(pwd)
                 
@@ -223,7 +224,7 @@ def main():
             # create a new username / password entry
             if uname != '' and pwd != '' and curr_name == '':
                 if args.key:
-                    rsa = RSAcipher(certfile='pub_' + args.key + '.pem')
+                    rsa = RSAcipher(certfile=args.key + '.pub')
                     uname = rsa.encrypt(uname)
                     pwd = rsa.encrypt(pwd)
                     
