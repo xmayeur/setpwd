@@ -35,7 +35,10 @@ def main():
                         help="specify a user name")
     parser.add_argument("-p", "--password", required=False,
                         help="specify the user password")
-    
+    parser.add_argument("-if", "--inputfile", required=False,
+                        help="specify a text file containing a password - file name is used as username")
+    parser.add_argument("-of", "--outputfile", required=False,  action='store_true',
+                        help="Save the password to the file having  the Username as name")
     args = parser.parse_args()
 
     url = 'http://192.168.0.4:5000/api/ID'
@@ -90,17 +93,22 @@ def main():
             if uid == '' or uid is None:
                 print('Please enter a valid Identity name')
                 sys.exit(-1)
+
+        if args.inputfile is not None:
+            with open(args.inputfile, 'r') as f:
+                uname = args.inputfile
+                pwd = f.read()
                 
         # for a new record, also ask for a username
-        if args.new:
+        if args.new and uname == '':
             if args.username:
                 uname = args.username
             else:
                 uname = input('Enter a User Name: ')
-        
+            
         if args.password:
             pwd = args.password
-        else:
+        elif pwd == '':
             pwd = getpass.getpass('Enter your password: ')
 
         # Retrieve the username / password pair using the given Identity
@@ -119,7 +127,7 @@ def main():
                 curr_pwd = rsa.decrypt(curr_pwd)
     
             # Check if passwords match or exit
-            if curr_pwd != pwd:
+            if curr_pwd != pwd and args.outputfile is None:
                 print('Password mismatch!')
                 exit(-1)
                 
@@ -148,9 +156,9 @@ def main():
             else:
                 pwd = getpass.getpass('Enter your password: ')
             
-            if args.username:
+            if args.username and uname != '':
                 uname = args.username
-            else:
+            elif uname != '':
                 uname = curr_name
                 if uname == '':
                     uname = input('Enter your username')
